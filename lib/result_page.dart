@@ -65,9 +65,10 @@ class _ResultPageState extends State<ResultPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text("Your results"),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
