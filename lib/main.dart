@@ -3,6 +3,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:music_ir/result_page.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
 import 'dart:io';
 
 void main() {
@@ -293,13 +296,13 @@ class NameLyricScreen extends StatelessWidget {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0), // Adjust vertical padding
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Align text to the start
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         alignment: Alignment.centerLeft,
-                        padding: EdgeInsets.symmetric(horizontal: 12), // Add padding to the left
+                        padding: EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
                           "Enter your song name or lyric",
                           style: TextStyle(
@@ -316,7 +319,7 @@ class NameLyricScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20), // Adjust spacing between text and search bar
+                      SizedBox(height: 20),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                         child: GestureDetector(
@@ -364,7 +367,7 @@ class NameLyricScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0), // Add padding
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Text(
                         "Discover song names and lyrics easily.",
                         style: TextStyle(
@@ -393,6 +396,45 @@ class SearchResultScreen extends StatefulWidget {
 
 class _SearchResultScreenState extends State<SearchResultScreen> {
   TextEditingController _searchController = TextEditingController();
+  List<dynamic> _results = [];
+  bool _isLoading = false;
+
+  // Function to fetch data from the API
+  Future<void> _fetchSearchResults(String query) async {
+    final url = Uri.parse(
+        "https://musictextsearchapi-1089901605984.asia-southeast2.run.app/search?query=$query&size=20");
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _results = data; // Assuming the API returns a list of results directly
+        });
+      } else {
+        print("Failed to fetch results: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Function to open a URL
+  void _openYouTubeLink(String link) async {
+    final uri = Uri.parse(link);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      print("Could not open the link: $link");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -404,7 +446,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               Color(0xFF002F38),
               Color(0xFF1E1E1E),
             ],
-            stops: [0.0, 0.49 / 2, 0.89 / 2], // Adjusted stops for smoother transition
+            stops: [0.0, 0.49 / 2, 0.89 / 2],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -412,7 +454,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // App Bar with only the search field and "Cancel" button
+              // App Bar with Search Field and Cancel Button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 20.0),
                 child: Row(
@@ -441,20 +483,23 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                                   contentPadding: EdgeInsets.symmetric(vertical: 11.0),
                                   suffixIcon: _searchController.text.isNotEmpty
                                       ? IconButton(
-                                        icon: Icon(Icons.clear, color: Colors.white),
-                                        onPressed: () {
-                                          setState(() {
-                                            _searchController.clear();
-                                          });
-                                        },
-                                      )
-                                      : null,
+                                          icon: Icon(Icons.clear, color: Colors.white),
+                                          onPressed: () {
+                                            setState(() {
+                                              _searchController.clear();
+                                            });
+                                          },
+                                        )
+                                            : null,
                                 ),
                                 style: TextStyle(color: Colors.white),
                                 onChanged: (text) {
                                   setState(() {
-                                    print("Search text: $text");
-                                  }); // Refresh UI to show or hide "X" button
+                                    print("Text changed: $text"); // Debug log
+                                  });
+                                },
+                                onSubmitted: (text) {
+                                  _fetchSearchResults(text);
                                 },
                               ),
                             ),
@@ -464,7 +509,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context); // Go back to the previous screen
+                        Navigator.pop(context);
                       },
                       child: Text(
                         "Cancel",
@@ -474,61 +519,45 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                   ],
                 ),
               ),
-              // Main content area
+              // Results Section
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Your result",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(2.0, 2.0),
-                              blurRadius: 17.0,
-                              color: Color(0xFFEDF2F4),
-                            )
-                          ],
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator(color: Colors.white))
+                    : _results.isEmpty
+                    ? Center(
+                        child: Text(
+                          "No results found.",
+                          style: TextStyle(color: Colors.white),
                         ),
-                      ),
-                      SizedBox(height: 12),
-                      // Add your results list or content here
-                      Container(
-                        width: double.infinity, // Ensures the container spans the full screen width
-                        padding: const EdgeInsets.all(16.0), // Padding for inner content
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFFFef6F6).withOpacity(0.0), // Transparent at the start
-                              Color(0xFFEde0E0).withOpacity(0.2), // Slightly opaque at the end
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                          borderRadius: BorderRadius.circular(8), // Rounded corners
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Love Me Do - Mono / Remastered",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.normal,
-                              ),
+                      )
+                    : ListView.builder(
+                      itemCount: _results.length,
+                      itemBuilder: (context, index) {
+                        final item = _results[index];
+                        return Card(
+                          color: Color(0xFF121212),
+                          margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                          child: ListTile(
+                            title: Text(
+                              item['title'] ?? "No Title",
+                              style: TextStyle(color: Colors.white),
                             ),
-                            // Add more rows or content here
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                            subtitle: Text(
+                              "Score: ${item['score'] ?? 0}",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(Icons.open_in_new, color: Colors.blue),
+                              onPressed: () {
+                                _openYouTubeLink(item['link'] ?? "");
+                              },
+                            ),
+                            onTap: () {
+                              _openYouTubeLink(item['link'] ?? "");
+                            },
+                          ),
+                    );
+                  },
                 ),
               ),
             ],
