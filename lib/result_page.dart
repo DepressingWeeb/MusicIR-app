@@ -64,8 +64,8 @@ class _ResultPageState extends State<ResultPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text("Your results"),
-        backgroundColor: Colors.white,
+        title: Text("Your results", style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: Colors.white),

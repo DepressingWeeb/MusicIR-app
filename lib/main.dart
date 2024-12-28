@@ -230,7 +230,7 @@ class _AudioScreenState extends State<AudioScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 120),
+              SizedBox(height: 80),
               Text(
                 isRecording
                     ? "Listening, please wait..."
@@ -490,7 +490,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                                   hintText: "Search",
                                   hintStyle: TextStyle(color: Colors.white70),
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 11.0),
+                                  contentPadding: EdgeInsets.symmetric(vertical: 6.0),
                                   suffixIcon: _searchController.text.isNotEmpty
                                       ? IconButton(
                                           icon: Icon(Icons.clear, color: Colors.white),
