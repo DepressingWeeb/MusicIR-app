@@ -119,6 +119,7 @@ class _AudioScreenState extends State<AudioScreen> {
       setState(() {
         tempFilePath = result.files.single.path!;
       });
+      _showSnackBar("File attached: ${result.files.single.name}");
       print(tempFilePath);
     }
   }
@@ -133,137 +134,146 @@ class _AudioScreenState extends State<AudioScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top Section with Linear Gradient Background
-            Expanded(
-              flex: 1,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF00667B),
-                      Color(0xFF002F38),
-                      Color(0xFF1E1E1E),
-                    ],
-                    stops: [0.0, 0.49, 0.89],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF00667B),
+                Color(0xFF002F38),
+                Color(0xFF1E1E1E),
+              ],
+              stops: [0.0, 0.49 / 2, 0.89 / 2], // Adjust stops for smoother transition
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0), // Padding for the whole Column
+            child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 20,),
+              // Top Content
+              Text(
+                "What song do",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(2.0, 2.0),
+                      blurRadius: 17.0,
+                      color: Color(0xFFEDF2F4),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "you looking at?",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(2.0, 2.0),
+                      blurRadius: 17.0,
+                      color: Color(0xFFEDF2F4),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 40),
+              GestureDetector(
+                onTap: () async {
+                  if (isRecording) {
+                    await _stopRecording();
+                  } else {
+                    await _startRecording();
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 96,
+                  backgroundColor: Color(0xFF5275AF),
+                  child: Icon(
+                    isRecording ? Icons.stop : Icons.mic,
+                    color: Colors.white,
+                    size: 90,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 20),
-                    Text(
-                      "What song do you looking at?",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(2.0, 2.0),
-                            blurRadius: 17.0,
-                            color: Color(0xFFEDF2F4),
-                          )
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: () async {
-                        if (isRecording) {
-                          await _stopRecording();
-                        } else {
-                          await _startRecording();
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 96,
-                        backgroundColor: Color(0xFF5275AF),
-                        child: Icon(
-                          isRecording ? Icons.stop : Icons.mic,
-                          color: Colors.white,
-                          size: 90,
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              SizedBox(height: 30),
+              // Bottom Content
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await _pickFile(); // Call your _pickFile method to attach a file
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tempFilePath == null ? Colors.white : Colors.green, // Dynamic color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                  ),
+                ),
+                icon: Icon(
+                  Icons.upload_file,
+                  color: tempFilePath == null ? Colors.black : Colors.white, // Dynamic icon color
+                ),
+                label: Text(
+                  tempFilePath == null ? "Attach files" : "File Attached", // Dynamic text
+                  style: TextStyle(
+                    color: tempFilePath == null ? Colors.black : Colors.white, // Dynamic text color
+                  ),
                 ),
               ),
-            ),
-            // Bottom Section with Solid Background Color
-            Expanded(
-              flex: 1,
-              child: Container(
-                width: double.infinity,
-                color: Color(0xFF1E1E1E),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: _pickFile,
-                      icon: Icon(
-                        Icons.upload_file,
-                        color: Colors.black,
-                      ),
-                      label: Text(
-                        "Attach files",
-                        style: TextStyle(color: Colors.black),
-                      ),
-                    ),
-                    SizedBox(height: 100),
-                    Text(
-                      isRecording
-                          ? "Listening, please wait..."
-                          : "Record or upload files!",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        if (tempFilePath == null) {
-                          return;
-                        }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ResultPage(filePath: tempFilePath),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF5275AF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 12),
-                        elevation: 0,
-                      ),
-                      icon: Icon(
-                        Icons.multitrack_audio_outlined,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        "Start Analyzing",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
+              SizedBox(height: 120),
+              Text(
+                isRecording
+                    ? "Listening, please wait..."
+                    : "Record or upload files!",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
+              SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (tempFilePath == null) {
+                    return;
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ResultPage(filePath: tempFilePath),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF5275AF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  elevation: 0,
+                ),
+                icon: Icon(
+                  Icons.multitrack_audio_outlined,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  "Start Analyzing",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -307,7 +317,7 @@ class NameLyricScreen extends StatelessWidget {
                           "Enter your song name or lyric",
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             shadows: [
                               Shadow(
@@ -537,24 +547,31 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                         return Card(
                           color: Color(0xFF121212),
                           margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                          child: ListTile(
-                            title: Text(
-                              item['title'] ?? "No Title",
-                              style: TextStyle(color: Colors.white),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0), // Padding inside the card
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between left and right sections
+                              children: [
+                                // Left Section: Icon and Song Name
+                                Row(
+                                  children: [
+                                    Icon(Icons.music_note, color: Colors.green, size: 24), // Music note icon
+                                    SizedBox(width: 12), // Spacing between icon and text
+                                    Text(
+                                      item['title'] ?? "No Title", // Song title
+                                      style: TextStyle(color: Colors.white, fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                                // Right Section: Play Icon
+                                IconButton(
+                                  icon: Icon(Icons.play_circle_filled, color: Colors.red, size: 28), // Play icon
+                                  onPressed: () {
+                                    _openYouTubeLink(item['link'] ?? ""); // Open the YouTube link
+                                  },
+                                ),
+                              ],
                             ),
-                            subtitle: Text(
-                              "Score: ${item['score'] ?? 0}",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.open_in_new, color: Colors.blue),
-                              onPressed: () {
-                                _openYouTubeLink(item['link'] ?? "");
-                              },
-                            ),
-                            onTap: () {
-                              _openYouTubeLink(item['link'] ?? "");
-                            },
                           ),
                     );
                   },
